@@ -1,0 +1,10 @@
+# Réglages non secrets, partagés par les services
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tableau-config
+data:
+  DB_HOST: db
+  DB_NAME: tableau
+  DB_USER: tableau
+  SALONS_URL: http://salons:5000
