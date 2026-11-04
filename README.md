@@ -53,7 +53,7 @@ docker-compose.yml   lancement en local
 Il faut Docker et Docker Compose.
 
 ```
-git clone https://github.com/DevopsEsilvLeo/tableau-partage.git
+git clone https://github.com/EsilvLeoM/tableau-partage.git
 cd tableau-partage
 cp .env.example .env
 ```
