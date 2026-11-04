@@ -1,0 +1,113 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [develop]
+    tags: ["v*"]
+  pull_request:
+    branches: [develop]
+
+jobs:
+  # Tests : à chaque push et pull request sur develop
+  test:
+    if: github.ref_type != 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fichier .env de test
+        run: |
+          echo "POSTGRES_USER=tableau" > .env
+          echo "POSTGRES_PASSWORD=$(openssl rand -hex 16)" >> .env
+          echo "POSTGRES_DB=tableau" >> .env
+
+      - name: Build des images et démarrage avec Docker Compose
+        run: docker compose up -d --build
+
+      - name: Test de l'application
+        run: bash scripts/test-api.sh http://localhost:8080
+
+      - name: Logs en cas d'échec
+        if: failure()
+        run: docker compose logs
+
+  # Production : à la création d'un tag v* sur main
+  build-push:
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Vérification que le tag est sur main
+        run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+      - name: Connexion au registre GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build et push des images
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          for SERVICE in salons traits frontend; do
+            IMAGE="ghcr.io/$OWNER/tableau-$SERVICE:${{ github.ref_name }}"
+            docker build -t "$IMAGE" "./$SERVICE"
+            docker push "$IMAGE"
+          done
+
+  deploy:
+    needs: build-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Création d'un cluster Kubernetes (kind)
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: tableau
+
+      - name: Connexion au registre GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Récupération des images depuis GHCR
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          for SERVICE in salons traits frontend; do
+            IMAGE="ghcr.io/$OWNER/tableau-$SERVICE:${{ github.ref_name }}"
+            docker pull "$IMAGE"
+            kind load docker-image "$IMAGE" --name tableau
+          done
+
+      - name: Déploiement avec kubectl apply
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          # Le mot de passe est généré ici, il n'est jamais écrit dans le dépôt
+          kubectl create secret generic tableau-secret --from-literal=DB_PASSWORD="$(openssl rand -hex 16)"
+          kubectl apply -f deploy/
+          for SERVICE in salons traits frontend; do
+            kubectl set image deployment/$SERVICE $SERVICE="ghcr.io/$OWNER/tableau-$SERVICE:${{ github.ref_name }}"
+          done
+          for D in db salons traits frontend; do
+            kubectl rollout status deployment/$D --timeout=300s
+          done
+          kubectl get pods
+
+      - name: Test de l'application déployée
+        run: |
+          kubectl port-forward service/frontend 8080:80 &
+          sleep 5
+          bash scripts/test-api.sh http://localhost:8080
