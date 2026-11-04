@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tableau partagé</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Zone visible : on déplace la grande page à l'intérieur -->
+  <div id="vue" class="outil-pinceau">
+    <canvas id="page" width="3000" height="2000"></canvas>
+  </div>
+
+  <!-- Écran d'accueil : créer ou rejoindre un salon -->
+  <div id="accueil">
+    <div class="boite">
+      <h1>Tableau partagé</h1>
+      <button id="btn-creer">Créer un salon</button>
+      <p>ou</p>
+      <input id="champ-code" maxlength="4" placeholder="Code du salon" autocomplete="off">
+      <button id="btn-rejoindre">Rejoindre</button>
+      <p id="message"></p>
+    </div>
+  </div>
+
+  <!-- Barre d'outils placée par-dessus la page -->
+  <div id="barre" hidden>
+    <span id="salon-info"></span>
+    <button data-outil="pinceau" class="actif">Pinceau</button>
+    <button data-outil="gomme">Gomme</button>
+    <button data-outil="main">Main</button>
+    <input type="color" id="couleur" value="#000000" title="Couleur">
+    <label>Taille <input type="range" id="taille" min="2" max="40" value="6"></label>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
