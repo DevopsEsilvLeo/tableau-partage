@@ -1,0 +1,91 @@
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+}
+
+/* La vue prend tout l'écran, la page est déplacée à l'intérieur */
+#vue {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #d9d9d9;
+  touch-action: none;
+}
+
+#page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: #ffffff;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+}
+
+.outil-pinceau,
+.outil-gomme {
+  cursor: crosshair;
+}
+
+.outil-main {
+  cursor: grab;
+}
+
+/* Écran d'accueil */
+#accueil {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.boite {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 32px;
+  background: #ffffff;
+  border: 1px solid #cccccc;
+  border-radius: 8px;
+}
+
+.boite p {
+  margin: 0;
+}
+
+#message {
+  color: #b00020;
+  min-height: 1.2em;
+}
+
+/* Barre d'outils par-dessus la page */
+#barre {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1px solid #cccccc;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+#barre button.actif {
+  background: #333333;
+  color: #ffffff;
+}
+
+#salon-info {
+  font-weight: bold;
+  margin-right: 8px;
+}
